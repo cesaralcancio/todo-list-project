@@ -22,6 +22,6 @@
 (defn start-dev []
   (let [system-return (component/start (base-system :dev))
         start-dev (-> system-return :pedestal :start-dev)
-        restart (-> system-return :pedestal :restart)]
-    (try (start-dev) (catch Exception e (try (restart) (catch Exception e (println "Error!" e)))))
+        restart (-> system-return :pedestal :restart-dev)]
+    (try (start-dev) (catch Exception e (try (restart) (catch Exception e (println "Error in restart!" e)))))
     system-return))

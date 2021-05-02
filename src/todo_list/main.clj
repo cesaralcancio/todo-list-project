@@ -9,6 +9,8 @@
 
 ; get server from components
 (def server (-> result :pedestal :server))
+(pp/pprint (-> result :database :store))
+
 (defn test-request [verb url]
   (io.pedestal.test/response-for (::http/service-fn @server) verb url))
 
@@ -23,20 +25,22 @@
 (println (test-request :get location-todo-cesar))
 
 (def all-todos (test-request :get "/todo"))
-(println all-todos)
+(pp/pprint all-todos)
 
 (def item-1 (test-request :post (str location-todo-cesar "?name=cesar-item-1")))
 (def item-2 (test-request :post (str location-todo-cesar "?name=cesar-item-2&status=true")))
-(def item-3 (test-request :post (str location-todo-cesar "?name=cesar-item-2&status=false")))
+(def item-3 (test-request :post (str location-todo-cesar "?name=cesar-item-3&status=false")))
 (println item-1)
 (println item-2)
-(println item-3)
+(println (clojure.edn/read-string (:body item-3)))
 
 (def items (test-request :get location-todo-cesar))
 (def first-item-id (-> items :body (clojure.edn/read-string) :items first first))
-(println items)
+(pp/pprint items)
+(pp/pprint (clojure.edn/read-string (:body items)))
 (println first-item-id)
 
+; To be implemented
 (def get-item (test-request :get (str location-todo-cesar "/" first-item-id)))
 (def put-item (test-request :put (str location-todo-cesar "/" first-item-id)))
 (def delete-item (test-request :delete (str location-todo-cesar "/" first-item-id)))

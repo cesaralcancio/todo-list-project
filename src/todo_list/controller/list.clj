@@ -29,8 +29,7 @@
   {:name :echo
    :enter
          (fn [context]
-           (let [request (:request context)
-                 response (util/ok context)]
+           (let [response (util/ok context)]
              (assoc context :response response)))})
 
 (def entity-render
@@ -41,7 +40,7 @@
              (assoc context :response (util/ok item))
              context))})
 
-(defn list-create [{{{store :store} :database} :components query-params :query-params :as request}]
+(defn create [{{{store :store} :database} :components query-params :query-params}]
   (let [id (util/uuid)
         name (get-in query-params [:name] "Unnamed List")
         new-list (make-list id name)
@@ -49,10 +48,10 @@
     (apply swap! store assoc [id new-list])
     (util/created new-list "Location" url)))
 
-(defn list-todos [request]
-  (util/ok (-> request :store)))
+(defn fetch-all [request]
+  (util/ok @(-> request :components :database :store)))
 
-(def list-view
+(def fetch-by-id
   {:name :list-view
    :enter
          (fn [context]
@@ -62,7 +61,7 @@
                context)
              context))})
 
-(def list-item-view
+(def item-fetch-by-id
   {:name :list-item-view
    :leave
          (fn [context]
@@ -74,19 +73,15 @@
                context)
              context))})
 
-(def list-item-create
-  {:name :list-item-create
-   :enter
-         (fn [context]
-           (if-let [list-id (get-in context [:request :path-params :list-id])]
-             (let [item-id (str (gensym "i"))
-                   nm (get-in context [:request :query-params :name] "Unnamed Item")
-                   status (get-in context [:request :query-params :status] false)
-                   new-item (make-list-item list-id item-id nm status)]
-               (-> context
-                   (assoc :tx-data [list-item-add list-id item-id new-item])
-                   (assoc-in [:request :path-params :item-id] item-id)))
-             context))})
+(defn item-create [request]
+  (if-let [list-id (util/->uuid (get-in request [:path-params :list-id]))]
+    (let [store (-> request :components :database :store)
+          item-id (util/uuid)
+          item-name (get-in request [:query-params :name] "Unnamed Item")
+          item-status (get-in request [:query-params :status] false)
+          new-item (make-list-item list-id item-id item-name item-status)]
+      (apply swap! store list-item-add [list-id item-id new-item])
+      (util/ok (find-list-item-by-ids @store list-id item-id)))))
 
 (def version
   {:name :version
@@ -100,18 +95,3 @@
    :body   {:version     (str "version-" (:version request))
             :user        (-> request :components :config :user)
             :environment (-> request :components :config :env)}})
-
-(def db-interceptor
-  {:name :database-interceptor
-   :enter
-         (fn [context]
-           (let [store (-> context :request :components :database :store)]
-             (update context :request assoc :store @store)))
-   :leave
-         (fn [context]
-           (let [store (-> context :request :components :database :store)]
-             (if-let [[op & args] (:tx-data context)]
-               (do
-                 (apply swap! store op args)
-                 (assoc-in context [:request :store] @store))
-               context)))})
