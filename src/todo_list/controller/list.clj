@@ -51,27 +51,18 @@
 (defn fetch-all [request]
   (util/ok @(-> request :components :database :store)))
 
-(def fetch-by-id
-  {:name :list-view
-   :enter
-         (fn [context]
-           (if-let [db-id (get-in context [:request :path-params :list-id])]
-             (if-let [the-list (find-list-by-id (get-in context [:request :store]) (util/->uuid db-id))]
-               (assoc context :result the-list)
-               context)
-             context))})
+(defn fetch-by-id [request]
+  (let [db-id (get-in request [:path-params :list-id])
+        store (-> request :components :database :store)
+        the-list (find-list-by-id @store (util/->uuid db-id))]
+    (util/ok the-list)))
 
-(def item-fetch-by-id
-  {:name :list-item-view
-   :leave
-         (fn [context]
-           (if-let [list-id (get-in context [:request :path-params :list-id])]
-             (if-let [item-id (get-in context [:request :path-params :item-id])]
-               (if-let [item (find-list-item-by-ids (get-in context [:request :store]) list-id item-id)]
-                 (assoc context :result item)
-                 context)
-               context)
-             context))})
+(defn item-fetch-by-id [request]
+  (let [store (-> request :components :database :store)
+        list-id (get-in request [:path-params :list-id])
+        item-id (get-in request [:path-params :item-id])
+        item (find-list-item-by-ids @store (util/->uuid list-id) (util/->uuid item-id))]
+    (util/ok item)))
 
 (defn item-create [request]
   (if-let [list-id (util/->uuid (get-in request [:path-params :list-id]))]

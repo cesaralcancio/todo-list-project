@@ -22,7 +22,7 @@
 (println todo-cesar)
 (def location-todo-cesar (-> todo-cesar :headers (get "Location")))
 (println location-todo-cesar)
-(println (test-request :get location-todo-cesar))
+(pp/pprint (clojure.edn/read-string (:body (test-request :get location-todo-cesar))))
 
 (def all-todos (test-request :get "/todo"))
 (pp/pprint all-todos)
@@ -40,10 +40,12 @@
 (pp/pprint (clojure.edn/read-string (:body items)))
 (println first-item-id)
 
-; To be implemented
+; To be implemented (put and delete)
+(def url-item-1 (str location-todo-cesar "/" first-item-id))
+(println url-item-1)
 (def get-item (test-request :get (str location-todo-cesar "/" first-item-id)))
 (def put-item (test-request :put (str location-todo-cesar "/" first-item-id)))
 (def delete-item (test-request :delete (str location-todo-cesar "/" first-item-id)))
-(println get-item)
+(println (clojure.edn/read-string (:body get-item)))
 (println put-item)
 (println delete-item)
