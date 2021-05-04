@@ -32,13 +32,8 @@
            (let [response (util/ok context)]
              (assoc context :response response)))})
 
-(def entity-render
-  {:name :entity-render
-   :leave
-         (fn [context]
-           (if-let [item (:result context)]
-             (assoc context :response (util/ok item))
-             context))})
+(defn fetch-all [request]
+  (util/ok @(-> request :components :database :store)))
 
 (defn create [{{{store :store} :database} :components query-params :query-params}]
   (let [id (util/uuid)
@@ -48,21 +43,11 @@
     (apply swap! store assoc [id new-list])
     (util/created new-list "Location" url)))
 
-(defn fetch-all [request]
-  (util/ok @(-> request :components :database :store)))
-
 (defn fetch-by-id [request]
   (let [db-id (get-in request [:path-params :list-id])
         store (-> request :components :database :store)
         the-list (find-list-by-id @store (util/->uuid db-id))]
     (util/ok the-list)))
-
-(defn item-fetch-by-id [request]
-  (let [store (-> request :components :database :store)
-        list-id (get-in request [:path-params :list-id])
-        item-id (get-in request [:path-params :item-id])
-        item (find-list-item-by-ids @store (util/->uuid list-id) (util/->uuid item-id))]
-    (util/ok item)))
 
 (defn item-create [request]
   (if-let [list-id (util/->uuid (get-in request [:path-params :list-id]))]
@@ -73,6 +58,13 @@
           new-item (make-list-item list-id item-id item-name item-status)]
       (apply swap! store list-item-add [list-id item-id new-item])
       (util/ok (find-list-item-by-ids @store list-id item-id)))))
+
+(defn item-fetch-by-id [request]
+  (let [store (-> request :components :database :store)
+        list-id (get-in request [:path-params :list-id])
+        item-id (get-in request [:path-params :item-id])
+        item (find-list-item-by-ids @store (util/->uuid list-id) (util/->uuid item-id))]
+    (util/ok item)))
 
 (def version
   {:name :version

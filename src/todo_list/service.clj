@@ -4,11 +4,11 @@
 
 (def routes
   (route/expand-routes
-    #{["/todo" :post controller.list/create :route-name :list-create]
-      ["/todo" :get controller.list/fetch-all :route-name :list-fetch-all]
+    #{["/todo" :get controller.list/fetch-all :route-name :list-fetch-all]
+      ["/todo" :post controller.list/create :route-name :list-create]
 
-      ["/todo/:list-id" :post controller.list/item-create :route-name :list-item-create]
       ["/todo/:list-id" :get controller.list/fetch-by-id :route-name :list-fetch-by-id]
+      ["/todo/:list-id" :post controller.list/item-create :route-name :list-item-create]
 
       ["/todo/:list-id/:item-id" :get controller.list/item-fetch-by-id :route-name :item-fetch-by-id]
 
