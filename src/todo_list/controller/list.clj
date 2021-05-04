@@ -38,7 +38,7 @@
   (let [id (util/uuid)
         name (get-in query-params [:name] "Unnamed List")
         new-list (make-list id name)
-        url (route/url-for :list-view :params {:list-id id})]
+        url (route/url-for :list-fetch-all :params {:list-id id})]
     (apply swap! store assoc [id new-list])
     (util/created new-list "Location" url)))
 

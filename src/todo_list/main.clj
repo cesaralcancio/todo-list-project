@@ -4,6 +4,7 @@
             [io.pedestal.test :as test]
             [io.pedestal.http :as http]))
 
+; This is just a class to do manually tests while I am automatizing the integration tests
 (def result (components/start-dev))
 ; (def result (components/start-prod))
 
@@ -16,13 +17,14 @@
 (assoc item :name "Cesar-new")
 
 (defn test-request [verb url]
-  (io.pedestal.test/response-for (::http/service-fn @server) verb url))
+  (test/response-for (::http/service-fn @server) verb url))
 
 ; Validation the version service manually
 (println (test-request :get "/version"))
 
 ; Validating the services manually
-(def todo-cesar (test-request :post "/todo?name=cesar-alcancio-todo-list"))
+(def todo-cesar (test-request :post "/todo?name=cesar-alcancio-todo-list-1"))
+(println todo-cesar)
 (println todo-cesar)
 (def location-todo-cesar (-> todo-cesar :headers (get "Location")))
 (println location-todo-cesar)

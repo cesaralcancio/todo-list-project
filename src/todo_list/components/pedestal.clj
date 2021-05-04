@@ -12,6 +12,7 @@
        ::http/type   :jetty
        ::http/port   8890})
 
+    ; This is the magic
     (def components-interceptor (i/interceptor {:name  ::system
                                                 :enter (fn [context]
                                                          (assoc-in context
