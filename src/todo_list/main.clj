@@ -9,7 +9,11 @@
 
 ; get server from components
 (def server (-> result :pedestal :server))
-(pp/pprint (-> result :database :store))
+(def store (-> result :database :store))
+(pp/pprint store)
+(def item (get-in @store [#uuid "c0c47e2d-dc31-4d1a-8521-a81afa31f759" :items #uuid "a1ce89f1-ba35-4076-8b99-2fd66826cf38"] nil))
+(println item)
+(assoc item :name "Cesar-new")
 
 (defn test-request [verb url]
   (io.pedestal.test/response-for (::http/service-fn @server) verb url))
@@ -40,11 +44,10 @@
 (pp/pprint (clojure.edn/read-string (:body items)))
 (println first-item-id)
 
-; To be implemented (put and delete)
 (def url-item-1 (str location-todo-cesar "/" first-item-id))
 (println url-item-1)
 (def get-item (test-request :get (str location-todo-cesar "/" first-item-id)))
-(def put-item (test-request :put (str location-todo-cesar "/" first-item-id)))
+(def put-item (test-request :put (str location-todo-cesar "/" first-item-id "?name=cesar-item-1-updated&status=true")))
 (def delete-item (test-request :delete (str location-todo-cesar "/" first-item-id)))
 (println (clojure.edn/read-string (:body get-item)))
 (println put-item)

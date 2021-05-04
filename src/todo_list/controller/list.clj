@@ -2,17 +2,23 @@
   (:require [io.pedestal.http.route :as route]
             [todo-list.controller.util :as util]))
 
-(defn find-list-by-id [dbval db-id]
-  (get dbval db-id))
+(defn find-list-by-id [store db-id]
+  (get store db-id))
 
-(defn find-list-item-by-ids [dbval list-id item-id]
-  (get-in dbval [list-id :items item-id] nil))
+(defn find-list-item-by-ids [store list-id item-id]
+  (get-in store [list-id :items item-id] nil))
 
 (defn list-item-add
-  [dbval list-id item-id new-item]
-  (if (contains? dbval list-id)
-    (assoc-in dbval [list-id :items item-id] new-item)
-    dbval))
+  [store list-id item-id new-item]
+  (if (contains? store list-id)
+    (assoc-in store [list-id :items item-id] new-item)
+    store))
+
+(defn list-item-remove
+  [store list-id item-id]
+  (if (contains? store list-id)
+    (update-in store [list-id :items] dissoc item-id)
+    store))
 
 (defn make-list [id nm]
   {:id    id
@@ -24,13 +30,6 @@
    :item-id item-id
    :name    nm
    :done?   (Boolean/valueOf status)})
-
-(def echo
-  {:name :echo
-   :enter
-         (fn [context]
-           (let [response (util/ok context)]
-             (assoc context :response response)))})
 
 (defn fetch-all [request]
   (util/ok @(-> request :components :database :store)))
@@ -65,6 +64,24 @@
         item-id (get-in request [:path-params :item-id])
         item (find-list-item-by-ids @store (util/->uuid list-id) (util/->uuid item-id))]
     (util/ok item)))
+
+(defn update-item-by-id [request]
+  (let [store (-> request :components :database :store)
+        list-id (util/->uuid (get-in request [:path-params :list-id]))
+        item-id (util/->uuid (get-in request [:path-params :item-id]))
+        item (find-list-item-by-ids @store list-id item-id)
+        new-item-name (get-in request [:query-params :name] (:name item))
+        new-item-status (get-in request [:query-params :status] (:status item))
+        new-item (make-list-item list-id item-id new-item-name new-item-status)]
+    (apply swap! store list-item-add [list-id item-id new-item])
+    (util/ok (find-list-item-by-ids @store list-id item-id))))
+
+(defn delete-item-by-id [request]
+  (let [store (-> request :components :database :store)
+        list-id (util/->uuid (get-in request [:path-params :list-id]))
+        item-id (util/->uuid (get-in request [:path-params :item-id]))]
+    (apply swap! store list-item-remove [list-id item-id])
+    (util/ok {:message "Item removed successfully"})))
 
 (def version
   {:name :version
